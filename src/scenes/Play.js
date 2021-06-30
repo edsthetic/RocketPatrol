@@ -8,16 +8,21 @@ class Play extends Phaser.Scene {
       this.load.image('rocket', './assets/rocket.png');
       this.load.image('spaceship', './assets/spaceship.png');
       this.load.image('starfield', './assets/starfield.png');
+      this.load.image('honeypot', './assets/honeypot.png');
+
+      //load bgm for reset
+      this.load.audio('bgm', './assets/bgm.mp3');
       // load spritesheet
       this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
-  }
+
+    }
 
   create() {
       // place tile sprite
       this.starfield = this.add.tileSprite(0, 0, 640, 480, 'starfield').setOrigin(0, 0);
 
       // green UI background
-      this.add.rectangle(0, borderUISize + borderPadding, game.config.width, borderUISize * 2, 0x00FF00).setOrigin(0, 0);
+      this.add.rectangle(0, borderUISize + borderPadding, game.config.width, borderUISize * 2, 0x4541b0).setOrigin(0, 0);
       // white borders
       this.add.rectangle(0, 0, game.config.width, borderUISize, 0xFFFFFF).setOrigin(0 ,0);
       this.add.rectangle(0, game.config.height - borderUISize, game.config.width, borderUISize, 0xFFFFFF).setOrigin(0 ,0);
@@ -26,6 +31,9 @@ class Play extends Phaser.Scene {
 
       // add Rocket (p1)
       this.p1Rocket = new Rocket(this, game.config.width / 2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0);
+
+      //add Honeypot
+      this.Honeypot = new Honeypot(this, game.config.width / 2, game.config.height - borderUISize - borderPadding, 'honeypot').setOrigin(0.5, 0);
 
       // add Spaceships (x3)
       this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, 'spaceship', 0, 30).setOrigin(0, 0);
@@ -44,7 +52,6 @@ class Play extends Phaser.Scene {
           frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 9, first: 0}),
           frameRate: 30
       });
-
       // initialize score
       this.p1Score = 0;
 
@@ -52,8 +59,8 @@ class Play extends Phaser.Scene {
       let scoreConfig = {
           fontFamily: 'Courier',
           fontSize: '28px',
-          backgroundColor: '#F3B141',
-          color: '#843605',
+          backgroundColor: '#322671',
+          color: '#476ECC',
           align: 'right',
           padding: {
               top: 5,
@@ -61,11 +68,25 @@ class Play extends Phaser.Scene {
           },
           fixedWidth: 100
       }
-      this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig);
+      let timerConfig = {
+        fontFamily: 'Courier',
+        fontSize: '28px',
+        backgroundColor: '#322671',
+        color: '#476ECC',
+        align: 'left',
+        padding: {
+            top: 5,
+            bottom: 5,
+        },
+        fixedWidth: 100
+    }
 
+      this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig);
+      this.timeLeft = this.add.text(15, borderUISize + borderPadding*2, 'Time : ', timerConfig);
       // GAME OVER flag
       this.gameOver = false;
 
+      //Display Timer
       // 60-second play clock
       scoreConfig.fixedWidth = 0;
       this.clock = this.time.delayedCall(game.settings.gameTimer, () => {
@@ -76,20 +97,25 @@ class Play extends Phaser.Scene {
   }
 
   update() {
+
+      // timer update (display)
+
       // check key input for restart / menu
       if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
           this.scene.restart();
       }
 
       if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyLEFT)) {
+          this.sound.get('bgm').stop();
           this.scene.start("menuScene");
       }
 
       this.starfield.tilePositionX -= 4;  // update tile sprite
 
       if(!this.gameOver) {
-          this.p1Rocket.update();             // update p1
-           this.ship01.update();               // update spaceship (x3)
+          this.p1Rocket.update();    
+          this.Honeypot.update();         // update p1
+          this.ship01.update();               // update spaceship (x3)
           this.ship02.update();
           this.ship03.update();
       }
