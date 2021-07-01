@@ -9,6 +9,11 @@ class Play extends Phaser.Scene {
       this.load.image('spaceship', './assets/spaceship.png');
       this.load.image('starfield', './assets/starfield.png');
       this.load.image('honeypot', './assets/honeypot.png');
+      this.load.image('score', './assets/score_image.png');
+      this.load.image('time', './assets/time_image.png');
+      this.load.image('fire', './assets/fire_image.png');
+
+
 
       //load bgm for reset
       this.load.audio('bgm', './assets/bgm.mp3');
@@ -18,6 +23,7 @@ class Play extends Phaser.Scene {
     }
 
   create() {
+
       // place tile sprite
       this.starfield = this.add.tileSprite(0, 0, 640, 480, 'starfield').setOrigin(0, 0);
 
@@ -33,7 +39,7 @@ class Play extends Phaser.Scene {
       this.p1Rocket = new Rocket(this, game.config.width / 2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0);
 
       //add Honeypot
-      this.Honeypot = new Honeypot(this, game.config.width / 2, game.config.height - borderUISize - borderPadding, 'honeypot').setOrigin(0.5, 0);
+      this.Honeypot = new Honeypot(this, game.config.width / 2, game.config.height - borderUISize - borderPadding, 'honeypot', 0, this.p1Rocket).setOrigin(0.5, 0);
 
       // add Spaceships (x3)
       this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, 'spaceship', 0, 30).setOrigin(0, 0);
@@ -54,6 +60,7 @@ class Play extends Phaser.Scene {
       });
       // initialize score
       this.p1Score = 0;
+      this.timer = (game.settings.gameTimer / 1000);
 
       // display score
       let scoreConfig = {
@@ -82,11 +89,21 @@ class Play extends Phaser.Scene {
     }
 
       this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig);
-      this.timeLeft = this.add.text(15, borderUISize + borderPadding*2, 'Time : ', timerConfig);
+      //this.timeLeft = this.add.text(game.config.width - 145, borderUISize + borderPadding*2, this.timer, timerConfig);
       // GAME OVER flag
+      this.scoreView = this.add.image(borderUISize + 55, borderUISize + 100, 'score')
+      this.timeView = this.add.image(borderUISize + 520, borderUISize + 100, 'time')
       this.gameOver = false;
 
       //Display Timer
+    console.log('create');
+    // 2:30 in seconds
+    this.initialTime = this.timer;
+
+    text = this.add.text(game.config.width - 145, borderUISize + borderPadding*2, formatTime(this.initialTime), timerConfig);
+
+    // Each 1000 ms call onEvent
+    timedEvent = this.time.addEvent({ delay: 1000, callback: onEvent, callbackScope: this, loop: true });
       // 60-second play clock
       scoreConfig.fixedWidth = 0;
       this.clock = this.time.delayedCall(game.settings.gameTimer, () => {
@@ -97,9 +114,7 @@ class Play extends Phaser.Scene {
   }
 
   update() {
-
-      // timer update (display)
-
+      console.log("update time")
       // check key input for restart / menu
       if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
           this.scene.restart();
@@ -161,7 +176,30 @@ class Play extends Phaser.Scene {
       // score add and repaint
       this.p1Score += ship.points;
       this.scoreLeft.text = this.p1Score; 
-      
       this.sound.play('sfx_explosion');
+    }
+    
+}
+function formatTime(seconds){
+    // Minutes
+    var minutes = Math.floor(seconds/60);
+    // Seconds
+    var partInSeconds = seconds%60;
+    // Adds left zeros to seconds
+    partInSeconds = partInSeconds.toString().padStart(2,'0');
+    // Returns formated time
+    return `${minutes}:${partInSeconds}`;
+}
+function onEvent ()
+{
+    console.log("succeed")
+    if (this.initializeTime == 0) {
+        this.initialTime -= 0; 
+        console.log("stopped at 0 !")
+    }
+    else {
+        this.initialTime -= 1; // One second
+        text.setText(formatTime(this.initialTime));
+        console.log("counting down...")
     }
 }
